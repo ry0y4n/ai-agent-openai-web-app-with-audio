@@ -12,46 +12,60 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace dotnetfashionassistant.Services
-{    public class AzureAIAgentService
+{
+    public class AzureAIAgentService
     {
         private readonly string? _connectionString;
         private AgentsClient? _client;
         private string? _agentId;
-        private readonly string? _originalAgentId; // Store original value from environment
+        private readonly string? _originalAgentId;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AzureAIAgentService> _logger;
         private bool _isConfigured = false;
         private bool _isInitialized = false;
         private readonly object _initLock = new object();
-        private readonly int _maxCacheEntries = 100; // Configure maximum cache entries
+        private readonly int _maxCacheEntries = 100;
         
-        // Thread-safe caches for thread history to improve performance when navigating back to home
         private readonly ConcurrentDictionary<string, List<ChatMessage>> _threadHistoryCache = new();
-        private readonly ConcurrentDictionary<string, DateTime> _lastCacheUpdateTime = new();public AzureAIAgentService(IConfiguration configuration, ILogger<AzureAIAgentService> logger)
+        private readonly ConcurrentDictionary<string, DateTime> _lastCacheUpdateTime = new();
+
+        public AzureAIAgentService(IConfiguration configuration, ILogger<AzureAIAgentService> logger)
         {
             _configuration = configuration;
-            _logger = logger;            // Get configuration values from environment variables (App Service configuration)
-            // Try both double and single underscore naming conventions for compatibility
-            var doubleUnderscoreConn = Environment.GetEnvironmentVariable("AzureAIAgent__ConnectionString");
-            var singleUnderscoreConn = Environment.GetEnvironmentVariable("AzureAIAgent_ConnectionString");
-            var doubleUnderscoreId = Environment.GetEnvironmentVariable("AzureAIAgent__AgentId");
-            var singleUnderscoreId = Environment.GetEnvironmentVariable("AzureAIAgent_AgentId");
-              // Only log a single line with key information about configuration
-            _connectionString = doubleUnderscoreConn ?? singleUnderscoreConn;
-            _agentId = doubleUnderscoreId ?? singleUnderscoreId;
-            _originalAgentId = _agentId; // Store original value
-            
+            _logger = logger;
+
+            // Get configuration values from environment variables (App Service configuration)
+            var envConnectionString = FirstNonEmpty(
+                Environment.GetEnvironmentVariable("AzureAIAgent__ConnectionString"),
+                Environment.GetEnvironmentVariable("AzureAIAgent_ConnectionString"));
+            var envAgentId = FirstNonEmpty(
+                Environment.GetEnvironmentVariable("AzureAIAgent__AgentId"),
+                Environment.GetEnvironmentVariable("AzureAIAgent_AgentId"));
+
+            // Fallback to appsettings configuration (useful for local development)
+            var configSection = _configuration.GetSection("AzureAIAgent");
+            var configuredConnectionString = configSection["ConnectionString"];
+            var configuredAgentId = configSection["AgentId"];
+
+            _connectionString = FirstNonEmpty(envConnectionString, configuredConnectionString);
+            _agentId = FirstNonEmpty(envAgentId, configuredAgentId);
+            _originalAgentId = _agentId;
+
             _isConfigured = !string.IsNullOrEmpty(_connectionString) && !string.IsNullOrEmpty(_agentId);
-            
+
             if (!_isConfigured)
             {
-                _logger.LogWarning("Azure AI Agent configuration missing: ConnectionString={0}, AgentId={1}", 
-                    !string.IsNullOrEmpty(_connectionString), 
+                _logger.LogWarning("Azure AI Agent configuration missing: ConnectionString={ConnectionStringConfigured}, AgentId={AgentIdConfigured}",
+                    !string.IsNullOrEmpty(_connectionString),
                     !string.IsNullOrEmpty(_agentId));
             }
             else
             {
-                _logger.LogInformation("Azure AI Agent initialized with Agent ID: {AgentId}", 
+                var source = envConnectionString != null || envAgentId != null
+                    ? "environment variables"
+                    : "configuration";
+                _logger.LogInformation("Azure AI Agent initialized from {Source} with Agent ID: {AgentId}",
+                    source,
                     _agentId?.Substring(0, Math.Min(8, _agentId.Length)) + "...");
             }
         }
@@ -108,7 +122,7 @@ namespace dotnetfashionassistant.Services
             if (!_isConfigured || threadId == "agent-not-configured")
             {
                 _logger.LogWarning("Attempted to send message with unconfigured AI Agent service");
-                return "The AI agent is not properly configured. Please add the required environment variables (AzureAIAgent__ConnectionString and AzureAIAgent__AgentId) in your application settings.";
+                return "The AI agent is not properly configured. Please add AzureAIAgent__ConnectionString and AzureAIAgent__AgentId via environment variables or appsettings.";
             }
             
             // Initialize client on demand
@@ -175,7 +189,7 @@ namespace dotnetfashionassistant.Services
             {
                 return new List<ChatMessage> {
                     new ChatMessage {
-                        Content = "The AI agent is not properly configured. Please add the required environment variables (AzureAIAgent__ConnectionString and AzureAIAgent__AgentId) in your application settings.",
+                        Content = "The AI agent is not properly configured. Please add AzureAIAgent__ConnectionString and AzureAIAgent__AgentId via environment variables or appsettings.",
                         IsUser = false,
                         Timestamp = DateTime.Now
                     }
@@ -295,6 +309,19 @@ namespace dotnetfashionassistant.Services
                 .Replace("\n\n", "<br><br>")
                 .Replace("\n", "<br>")
                 .Replace("•", "<br>•");
+        }
+
+        private static string? FirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value;
+                }
+            }
+
+            return null;
         }
         
         /// <summary>

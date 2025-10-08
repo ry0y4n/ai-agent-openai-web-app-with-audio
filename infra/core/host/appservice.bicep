@@ -18,7 +18,7 @@ param runtimeNameAndVersion string = '${runtimeName}|${runtimeVersion}'
 param runtimeVersion string
 
 // Microsoft.Web/sites Properties
-param kind string = 'app,linux'
+param kind string = 'app'
 
 // Microsoft.Web/sites/config
 param allowedOrigins array = []
@@ -37,6 +37,10 @@ param use32BitWorkerProcess bool = false
 param ftpsState string = 'FtpsOnly'
 param healthCheckPath string = ''
 
+var isLinux = contains(kind, 'linux')
+var isDotnetRuntime = contains([ 'dotnet', 'dotnetcore' ], toLower(runtimeName))
+var computedNetFrameworkVersion = !isLinux && isDotnetRuntime ? 'v${runtimeVersion}' : null
+
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
   name: name
   location: location
@@ -45,11 +49,12 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: appServicePlanId
     siteConfig: {
-      linuxFxVersion: linuxFxVersion
+      linuxFxVersion: isLinux ? linuxFxVersion : null
+      netFrameworkVersion: !isLinux ? computedNetFrameworkVersion : null
       alwaysOn: alwaysOn
       ftpsState: ftpsState
       minTlsVersion: '1.2'
-      appCommandLine: appCommandLine
+      appCommandLine: isLinux ? appCommandLine : null
       numberOfWorkers: numberOfWorkers != -1 ? numberOfWorkers : null
       minimumElasticInstanceCount: minimumElasticInstanceCount != -1 ? minimumElasticInstanceCount : null
       use32BitWorkerProcess: use32BitWorkerProcess
@@ -80,6 +85,18 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
+// sites/web/config 'logs'
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if (!empty(keyVaultName)) {
+  name: keyVaultName
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing = if (!empty(applicationInsightsName)) {
+  name: applicationInsightsName
+}
+
+var appInsightsSettings = !empty(applicationInsightsName) ? { APPLICATIONINSIGHTS_CONNECTION_STRING: any(applicationInsights).properties.ConnectionString } : {}
+var keyVaultSettings = !empty(keyVaultName) ? { AZURE_KEY_VAULT_ENDPOINT: any(keyVault).properties.vaultUri } : {}
+
 // Updates to the single Microsoft.sites/web/config resources that need to be performed sequentially
 // sites/web/config 'appsettings'
 module configAppSettings 'appservice-appsettings.bicep' = {
@@ -92,12 +109,11 @@ module configAppSettings 'appservice-appsettings.bicep' = {
         ENABLE_ORYX_BUILD: string(enableOryxBuild)
       },
       runtimeName == 'python' && appCommandLine == '' ? { PYTHON_ENABLE_GUNICORN_MULTIWORKERS: 'true'} : {},
-      !empty(applicationInsightsName) ? { APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.properties.ConnectionString } : {},
-      !empty(keyVaultName) ? { AZURE_KEY_VAULT_ENDPOINT: keyVault.properties.vaultUri } : {})
+      appInsightsSettings,
+      keyVaultSettings)
   }
 }
 
-// sites/web/config 'logs'
 resource configLogs 'Microsoft.Web/sites/config@2022-03-01' = {
   name: 'logs'
   parent: appService
@@ -108,14 +124,6 @@ resource configLogs 'Microsoft.Web/sites/config@2022-03-01' = {
     httpLogs: { fileSystem: { enabled: true, retentionInDays: 1, retentionInMb: 35 } }
   }
   dependsOn: [configAppSettings]
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if (!(empty(keyVaultName))) {
-  name: keyVaultName
-}
-
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing = if (!empty(applicationInsightsName)) {
-  name: applicationInsightsName
 }
 
 output identityPrincipalId string = managedIdentity ? appService.identity.principalId : ''

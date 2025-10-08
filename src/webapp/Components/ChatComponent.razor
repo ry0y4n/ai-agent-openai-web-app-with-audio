@@ -1,14 +1,23 @@
 @using dotnetfashionassistant.Models
 @using dotnetfashionassistant.Services
+@using Microsoft.AspNetCore.Components
 @using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Logging
+@using Microsoft.JSInterop
+@using System.Globalization
+@using System.Net.Http.Headers
+@using System.Net.Http.Json
 @using System.Text.Json
 @inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
 @inject IConfiguration configuration
 @inject IJSRuntime JSRuntime
+@inject ILogger<ChatComponent> Logger
 @inject dotnetfashionassistant.Services.AzureAIAgentService AzureAIAgentService
 @inject dotnetfashionassistant.Services.AgentModeService AgentModeService
 @inject dotnetfashionassistant.Services.CartUpdateService CartUpdateService
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 
 <div class="chat-container">
     <div class="chat-header">
@@ -148,10 +157,28 @@
                @bind="chatMessage" 
                @bind:event="oninput" 
                @onkeypress="HandleKeyPress" />
+        <button type="button" class="chat-mic-btn @(isRecordingVoice ? "recording" : string.Empty)" @onclick="ToggleVoiceRecording"
+                disabled="@(isLoading || isTranscribingVoice)" title="@(isRecordingVoice ? "録音停止" : "音声入力開始")">
+            <i class="bi @(isRecordingVoice ? "bi-stop-circle" : "bi-mic-fill")"></i>
+        </button>
         <button class="chat-send-btn" @onclick="SendChatMessage" disabled="@(isLoading || string.IsNullOrWhiteSpace(chatMessage))">
             <i class="bi bi-send-fill"></i>
         </button>
     </div>
+
+    @if (!string.IsNullOrEmpty(voiceStatusMessage) || !string.IsNullOrEmpty(voiceErrorMessage))
+    {
+        <div class="voice-status-container">
+            @if (!string.IsNullOrEmpty(voiceStatusMessage))
+            {
+                <small class="text-muted">@voiceStatusMessage</small>
+            }
+            @if (!string.IsNullOrEmpty(voiceErrorMessage))
+            {
+                <small class="text-danger">@voiceErrorMessage</small>
+            }
+        </div>
+    }
 </div>
 
 <style>
@@ -271,6 +298,45 @@
         background-color: #6c757d;
         cursor: not-allowed;
     }
+
+    .chat-mic-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background-color: #198754;
+        color: white;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background-color 0.2s ease;
+    }
+
+    .chat-mic-btn.recording {
+        background-color: #dc3545;
+        animation: pulse 1s infinite;
+    }
+
+    .chat-mic-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        animation: none;
+    }
+
+    .voice-status-container {
+        padding: 0 15px 12px 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    @@keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.6); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
     
     /* Typing indicator */
     .typing-indicator {
@@ -314,6 +380,14 @@
     private string chatMessage = string.Empty;
     private bool isLoading = false;
     private string? currentThreadId;
+    private bool isRecordingVoice = false;
+    private bool isTranscribingVoice = false;
+    private string voiceStatusMessage = string.Empty;
+    private string voiceErrorMessage = string.Empty;
+    private string speechRecognitionLanguage = "ja-JP";
+    private IJSObjectReference? voiceRecorderModule;
+    private DotNetObjectReference<ChatComponent>? dotNetRef;
+    private const int VoiceSampleRate = 16000;
     
     // Agent settings variables
     private bool showAgentSettings = false;
@@ -330,6 +404,8 @@
         // Initialize temp agent ID with current value
         tempAgentId = AzureAIAgentService.GetCurrentAgentId() ?? string.Empty;
         lastKnownAgentId = tempAgentId;
+
+        speechRecognitionLanguage = configuration["Speech:RecognitionLanguage"] ?? speechRecognitionLanguage;
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -360,6 +436,8 @@
             
             // Load chat history asynchronously after the first render for better performance
             await LoadChatHistoryAsync();
+
+            await EnsureVoiceModuleAsync();
         }
         
         // Scroll to bottom whenever component rerenders
@@ -376,6 +454,24 @@
         // For now, we'll skip loading chat history from the service
         // as the method doesn't exist in the current implementation
         await Task.CompletedTask;
+    }
+
+    private async Task EnsureVoiceModuleAsync()
+    {
+        try
+        {
+            if (voiceRecorderModule == null)
+            {
+                voiceRecorderModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/voiceRecorder.js");
+            }
+
+            dotNetRef ??= DotNetObjectReference.Create(this);
+        }
+        catch (JSException ex)
+        {
+            voiceErrorMessage = $"音声入力スクリプトの読み込みに失敗しました: {ex.Message}";
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private void StartNewConversation()
@@ -397,6 +493,224 @@
         
         // Update the UI
         StateHasChanged();
+    }
+
+    private async Task ToggleVoiceRecording()
+    {
+        try
+        {
+            await EnsureVoiceModuleAsync();
+
+            if (voiceRecorderModule == null || dotNetRef == null)
+            {
+                voiceErrorMessage = "音声入力機能を初期化できませんでした。";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            voiceErrorMessage = string.Empty;
+
+            if (isRecordingVoice)
+            {
+                await voiceRecorderModule.InvokeVoidAsync("stopRecording");
+            }
+            else
+            {
+                voiceStatusMessage = "マイク入力を開始します...";
+                await InvokeAsync(StateHasChanged);
+                await voiceRecorderModule.InvokeVoidAsync("startRecording", dotNetRef, VoiceSampleRate);
+            }
+        }
+        catch (JSException jsEx)
+        {
+            voiceErrorMessage = $"マイクアクセスに失敗しました: {jsEx.Message}";
+            voiceStatusMessage = "音声入力を開始できませんでした";
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            voiceErrorMessage = $"音声入力エラー: {ex.Message}";
+            voiceStatusMessage = "音声入力を開始できませんでした";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnVoiceRecorderStatusChanged(string status)
+    {
+        await InvokeAsync(() =>
+        {
+            switch (status)
+            {
+                case "recording":
+                    isRecordingVoice = true;
+                    voiceStatusMessage = "録音中...";
+                    voiceErrorMessage = string.Empty;
+                    break;
+                case "stopped":
+                    isRecordingVoice = false;
+                    if (!isTranscribingVoice)
+                    {
+                        voiceStatusMessage = "録音を停止しました";
+                    }
+                    break;
+                default:
+                    voiceStatusMessage = status;
+                    break;
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    [JSInvokable]
+    public async Task OnVoiceRecorderError(string message)
+    {
+        await InvokeAsync(() =>
+        {
+            isRecordingVoice = false;
+            isTranscribingVoice = false;
+            voiceErrorMessage = string.IsNullOrWhiteSpace(message) ? "音声入力エラーが発生しました。" : message;
+            voiceStatusMessage = "音声入力を利用できません";
+            StateHasChanged();
+        });
+    }
+
+    [JSInvokable]
+    public async Task OnVoiceRecorderComplete(string base64Audio, int sampleRate)
+    {
+        Logger?.LogInformation("OnVoiceRecorderComplete invoked. base64Length={Base64Length}, sampleRate={SampleRate}",
+            string.IsNullOrWhiteSpace(base64Audio) ? 0 : base64Audio.Length, sampleRate);
+
+        if (string.IsNullOrWhiteSpace(base64Audio))
+        {
+            await InvokeAsync(() =>
+            {
+                voiceErrorMessage = "音声データが取得できませんでした。";
+                voiceStatusMessage = "音声認識に失敗しました";
+                isRecordingVoice = false;
+                isTranscribingVoice = false;
+                StateHasChanged();
+            });
+            return;
+        }
+
+        byte[] audioBytes;
+        try
+        {
+            audioBytes = Convert.FromBase64String(base64Audio);
+            Logger?.LogInformation("Decoded audio bytes length={ByteLength}", audioBytes.Length);
+        }
+        catch (FormatException)
+        {
+            await InvokeAsync(() =>
+            {
+                voiceErrorMessage = "音声データの解析に失敗しました。";
+                voiceStatusMessage = "音声認識に失敗しました";
+                isRecordingVoice = false;
+                isTranscribingVoice = false;
+                StateHasChanged();
+            });
+            return;
+        }
+
+        await InvokeAsync(() =>
+        {
+            isRecordingVoice = false;
+            isTranscribingVoice = true;
+            voiceStatusMessage = "音声を解析中...";
+            voiceErrorMessage = string.Empty;
+            StateHasChanged();
+        });
+
+        await SendAudioForTranscriptionAsync(audioBytes, sampleRate);
+    }
+
+    private async Task SendAudioForTranscriptionAsync(byte[] audioBytes, int sampleRate)
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient("LocalApi");
+            var requestUri = new Uri(new Uri(NavigationManager.BaseUri), "api/Speech/transcribe");
+            using var content = new MultipartFormDataContent();
+
+            var audioContent = new ByteArrayContent(audioBytes);
+            audioContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            content.Add(audioContent, "Audio", "voice-input.wav");
+
+            if (!string.IsNullOrWhiteSpace(speechRecognitionLanguage))
+            {
+                content.Add(new StringContent(speechRecognitionLanguage), "RecognitionLanguage");
+            }
+
+            if (sampleRate > 0)
+            {
+                content.Add(new StringContent(sampleRate.ToString(CultureInfo.InvariantCulture)), "SampleRate");
+            }
+
+            Logger?.LogInformation(
+                "Sending audio for transcription. bytes={ByteLength}, sampleRate={SampleRate}, baseAddress={BaseAddress}, requestUri={RequestUri}",
+                audioBytes.Length,
+                sampleRate,
+                client.BaseAddress,
+                requestUri);
+
+            var response = await client.PostAsync(requestUri, content);
+            if (!response.IsSuccessStatusCode)
+            {
+                var rawError = await response.Content.ReadAsStringAsync();
+                Logger?.LogWarning(
+                    "Transcription request failed. statusCode={StatusCode}, error={Error}",
+                    (int)response.StatusCode,
+                    string.IsNullOrWhiteSpace(rawError) ? "<empty>" : rawError);
+                await InvokeAsync(() =>
+                {
+                    voiceErrorMessage = $"音声認識に失敗しました ({(int)response.StatusCode})" +
+                        (string.IsNullOrWhiteSpace(rawError) ? string.Empty : $": {rawError}");
+                    voiceStatusMessage = "音声認識に失敗しました";
+                    StateHasChanged();
+                });
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<SpeechRecognitionResponse>();
+            await InvokeAsync(() =>
+            {
+                if (result?.Success == true && !string.IsNullOrWhiteSpace(result.RecognizedText))
+                {
+                    chatMessage = string.IsNullOrWhiteSpace(chatMessage)
+                        ? result.RecognizedText
+                        : $"{chatMessage} {result.RecognizedText}";
+                    voiceStatusMessage = "音声を文字に変換しました";
+                    voiceErrorMessage = string.Empty;
+                }
+                else
+                {
+                    voiceErrorMessage = result?.ErrorDetails ?? "音声を認識できませんでした。";
+                    voiceStatusMessage = "音声認識結果なし";
+                }
+
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Error while sending audio for transcription");
+            await InvokeAsync(() =>
+            {
+                voiceErrorMessage = $"音声認識エラー: {ex.Message}";
+                voiceStatusMessage = "音声認識エラー";
+                StateHasChanged();
+            });
+        }
+        finally
+        {
+            await InvokeAsync(() =>
+            {
+                isTranscribingVoice = false;
+                StateHasChanged();
+            });
+        }
     }
 
     private async Task SendChatMessage()
@@ -588,5 +902,27 @@
         showAgentSettings = false;
         agentSettingsMessage = string.Empty;
         tempAgentId = AzureAIAgentService.GetCurrentAgentId() ?? string.Empty;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        dotNetRef?.Dispose();
+
+        if (voiceRecorderModule != null)
+        {
+            try
+            {
+                await voiceRecorderModule.InvokeVoidAsync("dispose");
+                await voiceRecorderModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // 回線切断などでJS側が既に破棄されている場合は無視
+            }
+            catch (ObjectDisposedException)
+            {
+                // 既に破棄済みの場合は無視
+            }
+        }
     }
 }

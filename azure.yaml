@@ -12,7 +12,7 @@ infra:
   module: main
 
 services:
-  web:
+  web-win:
     project: ./src/webapp
     language: csharp
     host: appservice

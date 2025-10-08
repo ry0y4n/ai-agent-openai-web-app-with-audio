@@ -52,6 +52,8 @@ var resourceToken = toLower(uniqueString(subscription().id, environmentName, loc
 var aiStorageAccountName = 'aistg${take(replace(resourceToken, '-', ''), 16)}'
 var aiServicesAccountName = 'aisvc-${resourceToken}'
 var aiKeyVaultName = 'aikv-${resourceToken}'
+var appServicePlanNameActual = !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
+var webAppNameActual = !empty(appServiceName) ? appServiceName : '${abbrs.webSitesAppService}web-${resourceToken}'
 
 // Name of the service defined in azure.yaml
 // A tag named azd-service-name with this value should be applied to the service host resource, such as:
@@ -73,7 +75,7 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
   scope: rg
   params: {
-    name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
+    name: appServicePlanNameActual
     location: location
     tags: tags
     sku: {
@@ -87,20 +89,20 @@ module web './core/host/appservice.bicep' = {
   name: 'web'
   scope: rg
   params: {
-    name: !empty(appServiceName) ? appServiceName : '${abbrs.webSitesAppService}web-${resourceToken}'
+    name: webAppNameActual
     location: location
     appServicePlanId: appServicePlan.outputs.id
     runtimeName: 'dotnetcore'
     runtimeVersion: '9.0'
-    tags: union(tags, { 'azd-service-name': 'web' })
+    tags: union(tags, { 'azd-service-name': 'web-win' })
   }
 }
 
 // Azure AI Developer role definition ID
 var aiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'
 
-// Create a unique ID for the role assignment that doesn't depend on runtime values
-var roleAssignmentName = guid(subscription().id, environmentName, aiDeveloperRoleId)
+// Create a unique ID for the role assignment tied to the web app's current principal so OS switches don't collide
+var roleAssignmentName = guid(subscription().id, environmentName, aiDeveloperRoleId, webAppNameActual)
 
 // Assign Azure AI Developer role to the web app's managed identity
 resource azureAIDeveloperRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
