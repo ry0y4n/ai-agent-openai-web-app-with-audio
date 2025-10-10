@@ -92,10 +92,140 @@ namespace dotnetfashionassistant.Models
                 }
             };
             
+            // Organic Fresh Strawberries
+            var strawberries = new InventoryItem
+            {
+                ProductId = 200,
+                ProductName = "Organic Fresh Strawberries",
+                Price = 5.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 45 }
+                }
+            };
+            
+            // Whole Grain Artisan Bread
+            var bread = new InventoryItem
+            {
+                ProductId = 201,
+                ProductName = "Whole Grain Artisan Bread",
+                Price = 4.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 30 }
+                }
+            };
+            
+            // Extra Virgin Olive Oil
+            var oliveOil = new InventoryItem
+            {
+                ProductId = 202,
+                ProductName = "Extra Virgin Olive Oil",
+                Price = 12.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 25 }
+                }
+            };
+            
+            // Organic Free-Range Eggs
+            var eggs = new InventoryItem
+            {
+                ProductId = 203,
+                ProductName = "Organic Free-Range Eggs",
+                Price = 6.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 50 }
+                }
+            };
+            
+            // Grass-Fed Ground Beef
+            var beef = new InventoryItem
+            {
+                ProductId = 204,
+                ProductName = "Grass-Fed Ground Beef",
+                Price = 8.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 35 }
+                }
+            };
+            
+            // Wild Alaskan Salmon Fillet
+            var salmon = new InventoryItem
+            {
+                ProductId = 205,
+                ProductName = "Wild Alaskan Salmon Fillet",
+                Price = 14.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 20 }
+                }
+            };
+            
+            // Organic Mixed Greens Salad
+            var salad = new InventoryItem
+            {
+                ProductId = 206,
+                ProductName = "Organic Mixed Greens Salad",
+                Price = 3.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 40 }
+                }
+            };
+            
+            // Aged Cheddar Cheese
+            var cheese = new InventoryItem
+            {
+                ProductId = 207,
+                ProductName = "Aged Cheddar Cheese",
+                Price = 7.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 28 }
+                }
+            };
+            
+            // Greek Style Yogurt
+            var yogurt = new InventoryItem
+            {
+                ProductId = 208,
+                ProductName = "Greek Style Yogurt",
+                Price = 5.49m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 38 }
+                }
+            };
+            
+            // Organic Honey
+            var honey = new InventoryItem
+            {
+                ProductId = 209,
+                ProductName = "Organic Honey",
+                Price = 9.99m,
+                SizeInventory = new Dictionary<string, int>
+                {
+                    { "Unit", 22 }
+                }
+            };
+            
             inventory.Add(blazer);
             inventory.Add(whiteNavyShirt);
             inventory.Add(redShirt);
             inventory.Add(denimJacket);
+            inventory.Add(strawberries);
+            inventory.Add(bread);
+            inventory.Add(oliveOil);
+            inventory.Add(eggs);
+            inventory.Add(beef);
+            inventory.Add(salmon);
+            inventory.Add(salad);
+            inventory.Add(cheese);
+            inventory.Add(yogurt);
+            inventory.Add(honey);
             
             return inventory;
         }
