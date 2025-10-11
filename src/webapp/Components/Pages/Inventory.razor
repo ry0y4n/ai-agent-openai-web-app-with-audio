@@ -71,17 +71,17 @@
                               <div class="product-sizes">
                                 <span class="size-label">Available Sizes:</span>
                                 <div class="size-badges">
-                                    @foreach (var size in InventoryService.GetSizes())
+                                    @foreach (var sizeEntry in item.SizeInventory)
                                     {
-                                        @if (item.SizeInventory[size] > 0)
+                                        @if (sizeEntry.Value > 0)
                                         {
-                                            <span class="size-badge @GetStockLevelClass(item.SizeInventory[size])">
-                                                @size <span class="size-count">(@item.SizeInventory[size])</span>
+                                            <span class="size-badge @GetStockLevelClass(sizeEntry.Value)">
+                                                @sizeEntry.Key <span class="size-count">(@sizeEntry.Value)</span>
                                             </span>
                                         }
                                         else
                                         {
-                                            <span class="size-badge out-of-stock">@size <span class="size-count">(0)</span></span>
+                                            <span class="size-badge out-of-stock">@sizeEntry.Key <span class="size-count">(0)</span></span>
                                         }
                                     }
                                 </div>
