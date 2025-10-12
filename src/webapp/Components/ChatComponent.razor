@@ -16,6 +16,7 @@
 @inject dotnetfashionassistant.Services.AzureAIAgentService AzureAIAgentService
 @inject dotnetfashionassistant.Services.AgentModeService AgentModeService
 @inject dotnetfashionassistant.Services.CartUpdateService CartUpdateService
+@inject dotnetfashionassistant.Services.InventoryFilterService InventoryFilterService
 @rendermode InteractiveServer
 @implements IAsyncDisposable
 
@@ -483,6 +484,9 @@
         // Reset the chat history
         chatHistory.Clear();
         
+        // Clear inventory filter
+        InventoryFilterService.ClearFilter();
+        
         // Add a welcome message
         chatHistory.Add(new ChatMessage
         {
@@ -740,7 +744,8 @@
             }
               
             // Send message to Azure AI Agent and get response
-            string aiResponse = await AzureAIAgentService.SendMessageAsync(currentThreadId, userMessage);
+            var agentResponse = await AzureAIAgentService.SendMessageAsync(currentThreadId, userMessage);
+            string aiResponse = agentResponse.ResponseText;
             
             // Format the response for better HTML display
             string formattedResponse = FormatAgentResponse(aiResponse);
@@ -752,6 +757,14 @@
                 IsUser = false,
                 Timestamp = DateTime.Now 
             });
+            
+            // Update inventory filter based on tool calls
+            if (agentResponse.ToolCalls.Count > 0)
+            {
+                var functionNames = agentResponse.ToolCalls.Select(tc => tc.FunctionName ?? "").ToList();
+                var functionOutputs = agentResponse.ToolCalls.Select(tc => tc.Output ?? "").ToList();
+                InventoryFilterService.UpdateFilterFromToolCalls(functionNames, functionOutputs);
+            }
             
             // Check if the response mentions adding items to cart
             if (aiResponse.Contains("added to your cart") || 

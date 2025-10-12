@@ -117,12 +117,15 @@ namespace dotnetfashionassistant.Services
                 _logger.LogError(ex, "Error creating AI Agent thread");
                 return "agent-not-configured";
             }
-        }        public async Task<string> SendMessageAsync(string threadId, string userMessage)
+        }        public async Task<AgentResponse> SendMessageAsync(string threadId, string userMessage)
         {
             if (!_isConfigured || threadId == "agent-not-configured")
             {
                 _logger.LogWarning("Attempted to send message with unconfigured AI Agent service");
-                return "The AI agent is not properly configured. Please add AzureAIAgent__ConnectionString and AzureAIAgent__AgentId via environment variables or appsettings.";
+                return new AgentResponse 
+                { 
+                    ResponseText = "The AI agent is not properly configured. Please add AzureAIAgent__ConnectionString and AzureAIAgent__AgentId via environment variables or appsettings." 
+                };
             }
             
             // Initialize client on demand
@@ -131,7 +134,10 @@ namespace dotnetfashionassistant.Services
             if (_client == null || _agentId == null)
             {
                 _logger.LogWarning("Failed to initialize AI Agent client");
-                return "The AI agent client could not be initialized. Please check the configuration and try again.";
+                return new AgentResponse 
+                { 
+                    ResponseText = "The AI agent client could not be initialized. Please check the configuration and try again." 
+                };
             }
               try
             {
@@ -161,10 +167,11 @@ namespace dotnetfashionassistant.Services
                 ThreadMessage? latestAssistantMessage = messages
                     .Where(m => m.Role.ToString().Equals("Assistant", StringComparison.OrdinalIgnoreCase))
                     .OrderByDescending(m => m.CreatedAt)
-                    .FirstOrDefault();                if (latestAssistantMessage != null)
+                    .FirstOrDefault();
+
+                string responseText = "";
+                if (latestAssistantMessage != null)
                 {
-                    
-                    string responseText = "";
                     foreach (MessageContent contentItem in latestAssistantMessage.ContentItems)
                     {
                         if (contentItem is MessageTextContent textItem)
@@ -172,17 +179,76 @@ namespace dotnetfashionassistant.Services
                             responseText += textItem.Text;
                         }
                     }
-                    return responseText;
+                }
+                
+                // Get run steps to extract tool call information
+                var toolCalls = await GetToolCallsFromRunAsync(threadId, run.Id);
+
+                if (string.IsNullOrEmpty(responseText))
+                {
+                    _logger.LogWarning("No assistant response found in thread {ThreadId}", threadId);
+                    responseText = "No response from AI agent.";
                 }
 
-                _logger.LogWarning("No assistant response found in thread {ThreadId}", threadId);
-                return "No response from AI agent.";
+                return new AgentResponse 
+                { 
+                    ResponseText = responseText,
+                    ToolCalls = toolCalls
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error communicating with AI agent for thread {ThreadId}", threadId);
-                return $"Error communicating with AI agent: {ex.Message}";
+                return new AgentResponse 
+                { 
+                    ResponseText = $"Error communicating with AI agent: {ex.Message}" 
+                };
             }
+        }
+
+        private async Task<List<AgentToolCallInfo>> GetToolCallsFromRunAsync(string threadId, string runId)
+        {
+            var toolCallsList = new List<AgentToolCallInfo>();
+            
+            if (_client == null)
+            {
+                return toolCallsList;
+            }
+            
+            try
+            {
+                // Get run steps which contain tool call information
+                Response<PageableList<RunStep>> runStepsResponse = await _client.GetRunStepsAsync(threadId, runId);
+                IReadOnlyList<RunStep> runSteps = runStepsResponse.Value.Data;
+
+                foreach (var step in runSteps)
+                {
+                    // Check if this step contains tool calls
+                    if (step.StepDetails is RunStepToolCallDetails toolCallDetails)
+                    {
+                        foreach (var toolCall in toolCallDetails.ToolCalls)
+                        {
+                            // We're interested in function tool calls (API calls)
+                            if (toolCall is RunStepFunctionToolCall functionCall)
+                            {
+                                toolCallsList.Add(new AgentToolCallInfo
+                                {
+                                    ToolCallId = toolCall.Id,
+                                    FunctionName = functionCall.Name,
+                                    Arguments = functionCall.Arguments,
+                                    Output = functionCall.Output
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error retrieving tool calls from run {RunId}", runId);
+            }
+
+            return toolCallsList;
         }public async Task<List<ChatMessage>> GetThreadHistoryAsync(string threadId)
         {
             if (!_isConfigured || threadId == "agent-not-configured")

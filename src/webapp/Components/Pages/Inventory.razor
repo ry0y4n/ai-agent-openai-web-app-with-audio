@@ -8,7 +8,9 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject CartUpdateService CartUpdateService
+@inject InventoryFilterService InventoryFilterService
 @rendermode InteractiveServer
+@implements IDisposable
 
 <PageTitle>Fashion Store Inventory</PageTitle>
 
@@ -51,8 +53,16 @@
                 }    
             </div>
 
+            @if (InventoryFilterService.IsFilterActive && displayedInventory.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    No products match the AI assistant's recommendations. Try asking for different products.
+                </div>
+            }
+
             <div class="product-grid">
-                @foreach (var item in inventory)
+                @foreach (var item in displayedInventory)
                 {
                     <div class="product-card">
                         <div class="product-image">
@@ -572,6 +582,7 @@
 
 @code {
     private List<InventoryItem> inventory = null!;
+    private List<InventoryItem> displayedInventory = null!;
     private Dictionary<int, string> selectedSizes = new Dictionary<int, string>();
     private Dictionary<int, int> quantities = new Dictionary<int, int>();
     private bool showSuccessToast = false;
@@ -590,6 +601,40 @@
             selectedSizes[item.ProductId] = "";
             quantities[item.ProductId] = 1;
         }
+        
+        // Apply initial filter
+        ApplyFilter();
+        
+        // Subscribe to filter changes
+        InventoryFilterService.OnFilterChanged += OnFilterChanged;
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFilter();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyFilter()
+    {
+        if (InventoryFilterService.IsFilterActive && InventoryFilterService.FilteredProductIds.Count > 0)
+        {
+            // Filter inventory to show only products in the filter list
+            displayedInventory = inventory
+                .Where(item => InventoryFilterService.FilteredProductIds.Contains(item.ProductId))
+                .ToList();
+        }
+        else
+        {
+            // Show all inventory
+            displayedInventory = inventory;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from filter changes
+        InventoryFilterService.OnFilterChanged -= OnFilterChanged;
     }
 
     private string GetStockLevelClass(int count)

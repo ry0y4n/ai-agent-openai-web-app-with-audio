@@ -370,7 +370,8 @@
                 AgentModeService.CurrentThreadId = currentThreadId;
             }
               // Send message to Azure AI Agent and get response
-            string aiResponse = await AzureAIAgentService.SendMessageAsync(currentThreadId, userMessage);
+            var agentResponse = await AzureAIAgentService.SendMessageAsync(currentThreadId, userMessage);
+            string aiResponse = agentResponse.ResponseText;
             
             // Format the response for better HTML display
             string formattedResponse = FormatAgentResponse(aiResponse);
