@@ -43,6 +43,19 @@
                 <h1>Fashion Store</h1>
                 <p class="lead text-muted">Browse our latest collection of premium fashion items</p>
                 
+                @if (InventoryFilterService.IsFilterActive)
+                {
+                    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+                        <div>
+                            <i class="bi bi-funnel-fill me-2"></i>
+                            <strong>AI Filter Active:</strong> Showing @displayedInventory.Count of @inventory.Count products based on AI assistant recommendations
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="ClearFilter">
+                            <i class="bi bi-x-circle me-1"></i>Show All
+                        </button>
+                    </div>
+                }
+                
                 @if (errorMessage != null)
                 {
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -532,6 +545,12 @@
         border-color: #f5c6cb;
     }
     
+    .alert-info {
+        color: #055160;
+        background-color: #cff4fc;
+        border-color: #b6effb;
+    }
+    
     .btn-close {
         background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='m.235 1.027 1.027-.235 6.238 6.238 6.238-6.238 1.027.235-.235 1.027L8.292 8.292l6.238 6.238-.235 1.027-1.027-.235L7.03 9.084.792 15.322l-1.027-.235.235-1.027L6.238 7.822.235 1.584z'/%3e%3c/svg%3e") center/1em auto no-repeat;
         border: 0;
@@ -629,6 +648,11 @@
             // Show all inventory
             displayedInventory = inventory;
         }
+    }
+
+    private void ClearFilter()
+    {
+        InventoryFilterService.ClearFilter();
     }
 
     public void Dispose()
