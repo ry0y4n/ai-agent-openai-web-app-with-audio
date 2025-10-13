@@ -4,6 +4,8 @@ using Azure.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
@@ -82,7 +84,17 @@ namespace dotnetfashionassistant.Services
                       try
                 {
                     // Use ManagedIdentityCredential for Azure deployment
-                    _client = new AgentsClient(_connectionString, new DefaultAzureCredential());
+                    _client = new AgentsClient(_connectionString, new DefaultAzureCredential(
+                        new DefaultAzureCredentialOptions
+                        {
+                            ExcludeEnvironmentCredential = true,
+                            ExcludeInteractiveBrowserCredential = true,
+                            ExcludeVisualStudioCredential = true,
+                            ExcludeAzureCliCredential = false,
+                            ExcludeAzurePowerShellCredential = true,
+                            ExcludeVisualStudioCodeCredential = true
+                        }
+                    ));
                     _isInitialized = true;
                 }
                 catch (Exception ex)
@@ -210,34 +222,63 @@ namespace dotnetfashionassistant.Services
         {
             var toolCallsList = new List<AgentToolCallInfo>();
             
-            if (_client == null)
+            if (_client == null || string.IsNullOrEmpty(_connectionString))
             {
+                _logger.LogWarning("Client is null in GetToolCallsFromRunAsync");
                 return toolCallsList;
             }
             
             try
             {
-                // Get run steps which contain tool call information
+                // Get run steps using SDK
                 Response<PageableList<RunStep>> runStepsResponse = await _client.GetRunStepsAsync(threadId, runId);
-                IReadOnlyList<RunStep> runSteps = runStepsResponse.Value.Data;
-
-                foreach (var step in runSteps)
+                
+                // Access raw JSON response to extract tool call information
+                // This is necessary because the SDK's UnknownRunStepToolCall type doesn't expose
+                // the function name and output for OpenAPI tool calls
+                var rawResponse = runStepsResponse.GetRawResponse();
+                if (rawResponse != null && rawResponse.Content != null)
                 {
-                    // Check if this step contains tool calls
-                    if (step.StepDetails is RunStepToolCallDetails toolCallDetails)
+                    var rawContent = rawResponse.Content.ToString();
+                    
+                    // Parse the raw JSON to extract tool calls
+                    var jsonDoc = System.Text.Json.JsonDocument.Parse(rawContent);
+                    var root = jsonDoc.RootElement;
+                    
+                    if (root.TryGetProperty("data", out var dataArray))
                     {
-                        foreach (var toolCall in toolCallDetails.ToolCalls)
+                        foreach (var step in dataArray.EnumerateArray())
                         {
-                            // We're interested in function tool calls (API calls)
-                            if (toolCall is RunStepFunctionToolCall functionCall)
+                            if (step.TryGetProperty("step_details", out var stepDetails))
                             {
-                                toolCallsList.Add(new AgentToolCallInfo
+                                if (stepDetails.TryGetProperty("tool_calls", out var toolCallsArray))
                                 {
-                                    ToolCallId = toolCall.Id,
-                                    FunctionName = functionCall.Name,
-                                    Arguments = functionCall.Arguments,
-                                    Output = functionCall.Output
-                                });
+                                    foreach (var toolCall in toolCallsArray.EnumerateArray())
+                                    {
+                                        var toolCallId = toolCall.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                                        var toolType = toolCall.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
+                                        
+                                        // Handle both "function" and "openapi" tool calls
+                                        if ((toolType == "function" || toolType == "openapi") && 
+                                            toolCall.TryGetProperty("function", out var functionObj))
+                                        {
+                                            var functionName = functionObj.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                                            var arguments = functionObj.TryGetProperty("arguments", out var argsProp) ? argsProp.GetString() : null;
+                                            var output = functionObj.TryGetProperty("output", out var outputProp) ? outputProp.GetString() : null;
+                                            
+                                            if (!string.IsNullOrEmpty(functionName))
+                                            {
+                                                toolCallsList.Add(new AgentToolCallInfo
+                                                {
+                                                    ToolCallId = toolCallId,
+                                                    FunctionName = functionName,
+                                                    Arguments = arguments,
+                                                    Output = output
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

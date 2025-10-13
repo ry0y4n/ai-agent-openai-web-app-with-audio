@@ -32,14 +32,21 @@ namespace dotnetfashionassistant.Services
         public void UpdateFilterFromToolCalls(List<string> functionNames, List<string> functionOutputs)
         {
             // Check if any inventory-related functions were called
+            // Function names may have a prefix like "online_store_tool_"
             var inventoryFunctions = new HashSet<string>
             {
                 "getAllInventoryItems",
                 "getInventoryItemById",
-                "getInventorySizeCount"
+                "getInventorySizeCount",
+                "online_store_tool_getAllInventoryItems",
+                "online_store_tool_getInventoryItemById",
+                "online_store_tool_getInventorySizeCount"
             };
 
-            bool hasInventoryCall = functionNames.Any(fn => inventoryFunctions.Contains(fn));
+            // Check if any function matches (with or without prefix)
+            bool hasInventoryCall = functionNames.Any(fn => 
+                inventoryFunctions.Contains(fn) || 
+                inventoryFunctions.Any(invFunc => fn.EndsWith(invFunc)));
             
             if (!hasInventoryCall)
             {
@@ -60,12 +67,13 @@ namespace dotnetfashionassistant.Services
                 if (string.IsNullOrWhiteSpace(output)) continue;
 
                 // Parse product IDs from the output based on the function type
-                if (functionName == "getAllInventoryItems")
+                // Function name may have a prefix, so check with EndsWith
+                if (functionName.EndsWith("getAllInventoryItems"))
                 {
                     // Output is an array of inventory items
                     ExtractProductIdsFromArray(output, productIds);
                 }
-                else if (functionName == "getInventoryItemById" || functionName == "getInventorySizeCount")
+                else if (functionName.EndsWith("getInventoryItemById") || functionName.EndsWith("getInventorySizeCount"))
                 {
                     // Output is a single inventory item
                     ExtractProductIdFromObject(output, productIds);
@@ -95,11 +103,11 @@ namespace dotnetfashionassistant.Services
         {
             try
             {
-                // Simple JSON parsing to extract productId values
-                // Looking for "productId": <number> pattern
+                // Extract productId values from JSON or Python dict format
+                // Looking for "productId": <number> or 'productId': <number> pattern
                 var matches = System.Text.RegularExpressions.Regex.Matches(
                     jsonArray, 
-                    @"""productId""\s*:\s*(\d+)", 
+                    @"['""]productId['""]\s*:\s*(\d+)", 
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 
                 foreach (System.Text.RegularExpressions.Match match in matches)
@@ -120,10 +128,11 @@ namespace dotnetfashionassistant.Services
         {
             try
             {
-                // Simple JSON parsing to extract productId value
+                // Extract productId value from JSON or Python dict format
+                // Looking for "productId": <number> or 'productId': <number> pattern
                 var match = System.Text.RegularExpressions.Regex.Match(
                     jsonObject, 
-                    @"""productId""\s*:\s*(\d+)", 
+                    @"['""]productId['""]\s*:\s*(\d+)", 
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 
                 if (match.Success && match.Groups.Count > 1 && 

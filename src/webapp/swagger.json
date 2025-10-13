@@ -13,9 +13,7 @@
     "paths": {
         "/api/Cart": {
             "get": {
-                "tags": [
-                    "Cart"
-                ],
+                "tags": ["Cart"],
                 "operationId": "getCartSummary",
                 "summary": "Gets all items in the shopping cart along with the total cost",
                 "responses": {
@@ -32,9 +30,7 @@
                 }
             },
             "delete": {
-                "tags": [
-                    "Cart"
-                ],
+                "tags": ["Cart"],
                 "operationId": "clearCart",
                 "summary": "Clears all items from the cart",
                 "responses": {
@@ -53,9 +49,7 @@
         },
         "/api/Cart/add": {
             "post": {
-                "tags": [
-                    "Cart"
-                ],
+                "tags": ["Cart"],
                 "operationId": "addToCart",
                 "summary": "Adds an item to the shopping cart",
                 "requestBody": {
@@ -104,9 +98,7 @@
         },
         "/api/Cart/{productId}/size/{size}": {
             "put": {
-                "tags": [
-                    "Cart"
-                ],
+                "tags": ["Cart"],
                 "operationId": "updateCartItemQuantity",
                 "summary": "Updates the quantity of an item in the cart",
                 "parameters": [
@@ -184,9 +176,7 @@
                 }
             },
             "delete": {
-                "tags": [
-                    "Cart"
-                ],
+                "tags": ["Cart"],
                 "operationId": "removeCartItem",
                 "summary": "Removes an item from the cart",
                 "parameters": [
@@ -236,9 +226,7 @@
         },
         "/api/Inventory": {
             "get": {
-                "tags": [
-                    "Inventory"
-                ],
+                "tags": ["Inventory"],
                 "operationId": "getAllInventoryItems",
                 "summary": "Gets all inventory items",
                 "responses": {
@@ -260,9 +248,7 @@
         },
         "/api/Inventory/{id}": {
             "get": {
-                "tags": [
-                    "Inventory"
-                ],
+                "tags": ["Inventory"],
                 "operationId": "getInventoryItemById",
                 "summary": "Gets a specific inventory item by product ID",
                 "parameters": [
@@ -303,9 +289,7 @@
         },
         "/api/Inventory/{id}/size/{size}": {
             "get": {
-                "tags": [
-                    "Inventory"
-                ],
+                "tags": ["Inventory"],
                 "operationId": "getInventorySizeCount",
                 "summary": "Gets inventory count for a specific product and size",
                 "parameters": [
@@ -355,9 +339,7 @@
         },
         "/api/Inventory/sizes": {
             "get": {
-                "tags": [
-                    "Inventory"
-                ],
+                "tags": ["Inventory"],
                 "operationId": "getAllAvailableSizes",
                 "summary": "Gets all available sizes",
                 "responses": {
@@ -381,9 +363,7 @@
     "components": {
         "schemas": {
             "AddToCartRequest": {
-                "required": [
-                    "size"
-                ],
+                "required": ["size"],
                 "type": "object",
                 "properties": {
                     "productId": {
@@ -405,10 +385,7 @@
                 "additionalProperties": false
             },
             "CartItem": {
-                "required": [
-                    "productName",
-                    "size"
-                ],
+                "required": ["productName", "size"],
                 "type": "object",
                 "properties": {
                     "productId": {
@@ -452,9 +429,7 @@
                 "additionalProperties": false
             },
             "InventoryItem": {
-                "required": [
-                    "productName"
-                ],
+                "required": ["productName"],
                 "type": "object",
                 "properties": {
                     "productId": {
@@ -508,10 +483,7 @@
                 "additionalProperties": {}
             },
             "SizeInventoryResponse": {
-                "required": [
-                    "productName",
-                    "size"
-                ],
+                "required": ["productName", "size"],
                 "type": "object",
                 "properties": {
                     "productId": {
