@@ -84,17 +84,7 @@ namespace dotnetfashionassistant.Services
                       try
                 {
                     // Use ManagedIdentityCredential for Azure deployment
-                    _client = new AgentsClient(_connectionString, new DefaultAzureCredential(
-                        new DefaultAzureCredentialOptions
-                        {
-                            ExcludeEnvironmentCredential = true,
-                            ExcludeInteractiveBrowserCredential = true,
-                            ExcludeVisualStudioCredential = true,
-                            ExcludeAzureCliCredential = false,
-                            ExcludeAzurePowerShellCredential = true,
-                            ExcludeVisualStudioCodeCredential = true
-                        }
-                    ));
+                    _client = new AgentsClient(_connectionString, new DefaultAzureCredential());
                     _isInitialized = true;
                 }
                 catch (Exception ex)
