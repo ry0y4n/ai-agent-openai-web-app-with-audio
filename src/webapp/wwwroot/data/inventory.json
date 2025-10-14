@@ -1,0 +1,354 @@
+[
+  {
+    "productId": 3,
+    "productName": "ネイビー シングルブレスト スリムフィット フォーマルブレザー",
+    "price": 89.99,
+    "sizeInventory": {
+      "XS": 0,
+      "S": 0,
+      "M": 0,
+      "L": 0,
+      "XL": 0,
+      "XXL": 0,
+      "XXXL": 0
+    }
+  },
+  {
+    "productId": 111,
+    "productName": "白＆ネイビーブルー スリムフィット プリント カジュアルシャツ",
+    "price": 34.99,
+    "sizeInventory": {
+      "XS": 8,
+      "S": 15,
+      "M": 0,
+      "L": 18,
+      "XL": 12,
+      "XXL": 0,
+      "XXXL": 4
+    }
+  },
+  {
+    "productId": 116,
+    "productName": "赤チェック スリムフィット カジュアルシャツ",
+    "price": 39.99,
+    "sizeInventory": {
+      "XS": 10,
+      "S": 18,
+      "M": 22,
+      "L": 16,
+      "XL": 14,
+      "XXL": 7,
+      "XXXL": 5
+    }
+  },
+  {
+    "productId": 10,
+    "productName": "ネイビーブルー ウォッシュ加工 デニムジャケット",
+    "price": 59.99,
+    "sizeInventory": {
+      "XS": 6,
+      "S": 14,
+      "M": 19,
+      "L": 17,
+      "XL": 11,
+      "XXL": 9,
+      "XXXL": 4
+    }
+  },
+  {
+    "productId": 200,
+    "productName": "オーガニック フレッシュ ストロベリー",
+    "price": 5.99,
+    "sizeInventory": {
+      "Unit": 45
+    }
+  },
+  {
+    "productId": 201,
+    "productName": "全粒粉 アルチザン ブレッド",
+    "price": 4.99,
+    "sizeInventory": {
+      "Unit": 30
+    }
+  },
+  {
+    "productId": 202,
+    "productName": "エクストラバージン オリーブオイル",
+    "price": 12.99,
+    "sizeInventory": {
+      "Unit": 25
+    }
+  },
+  {
+    "productId": 203,
+    "productName": "オーガニック 放し飼い 卵",
+    "price": 6.99,
+    "sizeInventory": {
+      "Unit": 50
+    }
+  },
+  {
+    "productId": 204,
+    "productName": "グラスフェッド 牛ひき肉",
+    "price": 8.99,
+    "sizeInventory": {
+      "Unit": 35
+    }
+  },
+  {
+    "productId": 205,
+    "productName": "天然アラスカ産 サーモンフィレ",
+    "price": 14.99,
+    "sizeInventory": {
+      "Unit": 20
+    }
+  },
+  {
+    "productId": 206,
+    "productName": "オーガニック ミックスグリーン サラダ",
+    "price": 3.99,
+    "sizeInventory": {
+      "Unit": 40
+    }
+  },
+  {
+    "productId": 207,
+    "productName": "熟成チェダーチーズ",
+    "price": 7.99,
+    "sizeInventory": {
+      "Unit": 28
+    }
+  },
+  {
+    "productId": 208,
+    "productName": "ギリシャ風 ヨーグルト",
+    "price": 5.49,
+    "sizeInventory": {
+      "Unit": 38
+    }
+  },
+  {
+    "productId": 209,
+    "productName": "オーガニック はちみつ",
+    "price": 9.99,
+    "sizeInventory": {
+      "Unit": 22
+    }
+  },
+  {
+    "productId": 300,
+    "productName": "ワイヤレス Bluetooth ヘッドフォン",
+    "price": 79.99,
+    "sizeInventory": {
+      "Unit": 32
+    }
+  },
+  {
+    "productId": 301,
+    "productName": "スマート フィットネス ウォッチ",
+    "price": 149.99,
+    "sizeInventory": {
+      "Unit": 18
+    }
+  },
+  {
+    "productId": 302,
+    "productName": "ポータブル パワーバンク 20000mAh",
+    "price": 39.99,
+    "sizeInventory": {
+      "Unit": 55
+    }
+  },
+  {
+    "productId": 303,
+    "productName": "4K ウェブカメラ マイク付き",
+    "price": 89.99,
+    "sizeInventory": {
+      "Unit": 28
+    }
+  },
+  {
+    "productId": 304,
+    "productName": "ワイヤレス ゲーミング マウス",
+    "price": 59.99,
+    "sizeInventory": {
+      "Unit": 42
+    }
+  },
+  {
+    "productId": 400,
+    "productName": "ステンレス コーヒーメーカー",
+    "price": 129.99,
+    "sizeInventory": {
+      "Unit": 15
+    }
+  },
+  {
+    "productId": 401,
+    "productName": "ノンスティック 調理器具セット 10点",
+    "price": 99.99,
+    "sizeInventory": {
+      "Unit": 12
+    }
+  },
+  {
+    "productId": 402,
+    "productName": "電気ケトル 1.7L",
+    "price": 34.99,
+    "sizeInventory": {
+      "Unit": 38
+    }
+  },
+  {
+    "productId": 403,
+    "productName": "メモリーフォーム 枕セット",
+    "price": 49.99,
+    "sizeInventory": {
+      "Unit": 25
+    }
+  },
+  {
+    "productId": 404,
+    "productName": "ロボット掃除機",
+    "price": 199.99,
+    "sizeInventory": {
+      "Unit": 8
+    }
+  },
+  {
+    "productId": 500,
+    "productName": "ベストセラー ミステリー小説",
+    "price": 24.99,
+    "sizeInventory": {
+      "Unit": 48
+    }
+  },
+  {
+    "productId": 501,
+    "productName": "完全版 料理本コレクション",
+    "price": 39.99,
+    "sizeInventory": {
+      "Unit": 35
+    }
+  },
+  {
+    "productId": 502,
+    "productName": "プレミアム レザー ジャーナル",
+    "price": 29.99,
+    "sizeInventory": {
+      "Unit": 44
+    }
+  },
+  {
+    "productId": 503,
+    "productName": "教育用 科学キット",
+    "price": 44.99,
+    "sizeInventory": {
+      "Unit": 20
+    }
+  },
+  {
+    "productId": 600,
+    "productName": "ヨガマット キャリングストラップ付き",
+    "price": 29.99,
+    "sizeInventory": {
+      "Unit": 52
+    }
+  },
+  {
+    "productId": 601,
+    "productName": "調節可能 ダンベルセット",
+    "price": 299.99,
+    "sizeInventory": {
+      "Unit": 10
+    }
+  },
+  {
+    "productId": 602,
+    "productName": "キャンプ用テント 4人用",
+    "price": 159.99,
+    "sizeInventory": {
+      "Unit": 14
+    }
+  },
+  {
+    "productId": 603,
+    "productName": "プロフェッショナル 縄跳び",
+    "price": 19.99,
+    "sizeInventory": {
+      "Unit": 65
+    }
+  },
+  {
+    "productId": 604,
+    "productName": "断熱ウォーターボトル 32oz",
+    "price": 24.99,
+    "sizeInventory": {
+      "Unit": 58
+    }
+  },
+  {
+    "productId": 700,
+    "productName": "ナチュラル フェイス モイスチャライザー",
+    "price": 34.99,
+    "sizeInventory": {
+      "Unit": 42
+    }
+  },
+  {
+    "productId": 701,
+    "productName": "電動歯ブラシセット",
+    "price": 69.99,
+    "sizeInventory": {
+      "Unit": 28
+    }
+  },
+  {
+    "productId": 702,
+    "productName": "アロマセラピー エッセンシャルオイルセット",
+    "price": 29.99,
+    "sizeInventory": {
+      "Unit": 50
+    }
+  },
+  {
+    "productId": 703,
+    "productName": "ヘアスタイリング ツールセット",
+    "price": 79.99,
+    "sizeInventory": {
+      "Unit": 22
+    }
+  },
+  {
+    "productId": 800,
+    "productName": "戦略 ボードゲーム",
+    "price": 44.99,
+    "sizeInventory": {
+      "Unit": 35
+    }
+  },
+  {
+    "productId": 801,
+    "productName": "ビルディングブロックセット 1000ピース",
+    "price": 39.99,
+    "sizeInventory": {
+      "Unit": 28
+    }
+  },
+  {
+    "productId": 802,
+    "productName": "リモコン レーシングカー",
+    "price": 89.99,
+    "sizeInventory": {
+      "Unit": 18
+    }
+  },
+  {
+    "productId": 803,
+    "productName": "アート用品 ドローイングセット",
+    "price": 54.99,
+    "sizeInventory": {
+      "Unit": 32
+    }
+  }
+]

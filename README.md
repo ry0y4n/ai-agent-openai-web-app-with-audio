@@ -8,6 +8,7 @@ This sample contains a .NET Blazor web application that uses Azure AI Agents to 
 - Integration with Azure AI Agent Service for intelligent shopping assistance
 - Sample usage of the OpenAPI Specified Tool with Azure App Service
 - Secure authentication to Azure AI Agent Service with Azure managed identity
+- Externalized product data in JSON format with Japanese localization support
 
 ## Architecture
 
@@ -148,6 +149,57 @@ To view logs for your App Service:
 1. Navigate to your App Service in the Azure portal.
 2. In the left menu, select **Monitoring** > **Log stream** to view real-time logs.
 3. These logs will reveal any application issues that you may need to address.
+
+## Product Data Management
+
+The application now uses JSON files for product data management, making it easy to update product information without modifying code:
+
+### Product Data Files
+
+Product information is stored in JSON files located in `src/webapp/wwwroot/data/`:
+
+- **`inventory.json`**: Contains inventory data including product IDs, names, prices, and available sizes
+- **`products.json`**: Contains detailed product information including descriptions
+
+### Updating Product Information
+
+To update product information:
+
+1. Edit the JSON files in `src/webapp/wwwroot/data/`
+2. The application automatically loads the data on startup
+3. Changes take effect after restarting the application
+
+### JSON File Format
+
+**inventory.json** example:
+```json
+[
+  {
+    "productId": 3,
+    "productName": "ネイビー シングルブレスト スリムフィット フォーマルブレザー",
+    "price": 89.99,
+    "sizeInventory": {
+      "XS": 0,
+      "S": 0,
+      "M": 5,
+      "L": 10
+    }
+  }
+]
+```
+
+**products.json** example:
+```json
+[
+  {
+    "id": 3,
+    "name": "ネイビー シングルブレスト スリムフィット フォーマルブレザー",
+    "description": "このネイビーシングルブレストスリムフィットフォーマルブレザーは、ポリエステルとビスコースの混紡で作られています。"
+  }
+]
+```
+
+The application includes fallback to hardcoded data if JSON files are unavailable, ensuring reliability.
 
 ## Understanding the API Capabilities
 
