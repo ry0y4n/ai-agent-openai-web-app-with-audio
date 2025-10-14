@@ -5,6 +5,7 @@
 @using Microsoft.Net.Http.Headers
 @using System.Text
 @using System.Text.Json
+@using System.IO
 @using dotnetfashionassistant.Models
 @rendermode InteractiveServer
 @inject IHttpClientFactory HttpClientFactory
@@ -501,7 +502,63 @@
         await ScrollToBottom();
     }
 
-    public static readonly List<Product> products = new List<Product>()
+    private static List<Product>? _cachedProducts = null;
+    
+    public static List<Product> products
+    {
+        get
+        {
+            if (_cachedProducts != null)
+            {
+                return _cachedProducts;
+            }
+
+            // Attempt to resolve JSON file from multiple possible locations.
+            // Reason: Under 'dotnet run' the physical wwwroot content isn't copied to AppContext.BaseDirectory for development builds.
+            // The original code only probed '<base>/wwwroot/data/products.json' which often doesn't exist, triggering fallback English data.
+            string? ResolveProductsJson()
+            {
+                var fileName = "products.json";
+                var candidates = new List<string>
+                {
+                    Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", fileName),                                           // Published output scenario
+                    Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "wwwroot", "data", fileName)), // Development (bin/Debug/... back to project root)
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "data", fileName)                                   // Working directory root
+                };
+
+                foreach (var path in candidates.Distinct())
+                {
+                    if (File.Exists(path)) return path;
+                }
+                return null;
+            }
+
+            var resolvedPath = ResolveProductsJson();
+            if (resolvedPath != null)
+            {
+                try
+                {
+                    var jsonContent = File.ReadAllText(resolvedPath);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    _cachedProducts = JsonSerializer.Deserialize<List<Product>>(jsonContent, options);
+                    if (_cachedProducts != null)
+                    {
+                        Console.WriteLine($"Loaded products from JSON: {resolvedPath}");
+                        return _cachedProducts;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading products from JSON at '{resolvedPath}': {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("products.json not found in any expected location. Using fallback data.");
+            }
+
+            // Fallback to hardcoded data if JSON loading fails
+            _cachedProducts = new List<Product>()
     {
         new Product { Id = 3, Name = "Navy Single-Breasted Slim Fit Formal Blazer", Description = "This navy single-breasted slim fit formal blazer is made from a blend of polyester and viscose. It features a notched lapel, a chest welt pocket, two flap pockets, a front button fastening, long sleeves, button cuffs, a double vent to the rear, and a full lining." },
         new Product { Id = 111, Name = "White & Navy Blue Slim Fit Printed Casual Shirt", Description = "White and navy blue printed casual shirt, has a spread collar, short sleeves, button placket, curved hem, one patch pocket" },
@@ -544,12 +601,20 @@
         new Product { Id = 801, Name = "Building Blocks Set 1000 Pieces", Description = "Creative building blocks compatible with major brands. Includes storage box and instruction booklet with 20 model ideas. Ages 6+." },
         new Product { Id = 802, Name = "Remote Control Racing Car", Description = "High-speed RC car with 2.4GHz controller. Reaches speeds up to 30 mph, rechargeable battery, durable design for indoor and outdoor use." },
         new Product { Id = 803, Name = "Art Supplies Drawing Set", Description = "Complete 72-piece drawing set with colored pencils, sketching pencils, erasers, and sharpener. Portable carrying case included." }
-    };    
+            };
+            return _cachedProducts;
+        }
+    }
     
     public class Product
     {
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
         public int Id { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("name")]
         public required string Name { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("description")]
         public required string Description { get; set; }
 
         public Product GetProduct(int Id) => products.Find(products => products.Id == Id) ?? throw new InvalidOperationException("Product not found");
