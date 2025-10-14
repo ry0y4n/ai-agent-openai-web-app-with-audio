@@ -82,6 +82,9 @@ builder.Services.AddScoped<SpeechRecognitionService>();
 // Register AgentModeService as a singleton to persist mode state across the application
 builder.Services.AddSingleton<dotnetfashionassistant.Services.AgentModeService>();
 
+// Register InventoryFilterService as a singleton to share filter state across components
+builder.Services.AddSingleton<dotnetfashionassistant.Services.InventoryFilterService>();
+
 // Add HttpContextAccessor to access the current request context
 builder.Services.AddHttpContextAccessor();
 

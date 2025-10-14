@@ -8,7 +8,9 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject CartUpdateService CartUpdateService
+@inject InventoryFilterService InventoryFilterService
 @rendermode InteractiveServer
+@implements IDisposable
 
 <PageTitle>Fashion Store Inventory</PageTitle>
 
@@ -41,6 +43,19 @@
                 <h1>Fashion Store</h1>
                 <p class="lead text-muted">Browse our latest collection of premium fashion items</p>
                 
+                @if (InventoryFilterService.IsFilterActive)
+                {
+                    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+                        <div>
+                            <i class="bi bi-funnel-fill me-2"></i>
+                            <strong>AI Filter Active:</strong> Showing @displayedInventory.Count of @inventory.Count products based on AI assistant recommendations
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="ClearFilter">
+                            <i class="bi bi-x-circle me-1"></i>Show All
+                        </button>
+                    </div>
+                }
+                
                 @if (errorMessage != null)
                 {
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -51,8 +66,16 @@
                 }    
             </div>
 
+            @if (InventoryFilterService.IsFilterActive && displayedInventory.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    No products match the AI assistant's recommendations. Try asking for different products.
+                </div>
+            }
+
             <div class="product-grid">
-                @foreach (var item in inventory)
+                @foreach (var item in displayedInventory)
                 {
                     <div class="product-card">
                         <div class="product-image">
@@ -522,6 +545,12 @@
         border-color: #f5c6cb;
     }
     
+    .alert-info {
+        color: #055160;
+        background-color: #cff4fc;
+        border-color: #b6effb;
+    }
+    
     .btn-close {
         background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='m.235 1.027 1.027-.235 6.238 6.238 6.238-6.238 1.027.235-.235 1.027L8.292 8.292l6.238 6.238-.235 1.027-1.027-.235L7.03 9.084.792 15.322l-1.027-.235.235-1.027L6.238 7.822.235 1.584z'/%3e%3c/svg%3e") center/1em auto no-repeat;
         border: 0;
@@ -572,6 +601,7 @@
 
 @code {
     private List<InventoryItem> inventory = null!;
+    private List<InventoryItem> displayedInventory = null!;
     private Dictionary<int, string> selectedSizes = new Dictionary<int, string>();
     private Dictionary<int, int> quantities = new Dictionary<int, int>();
     private bool showSuccessToast = false;
@@ -590,6 +620,45 @@
             selectedSizes[item.ProductId] = "";
             quantities[item.ProductId] = 1;
         }
+        
+        // Apply initial filter
+        ApplyFilter();
+        
+        // Subscribe to filter changes
+        InventoryFilterService.OnFilterChanged += OnFilterChanged;
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFilter();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyFilter()
+    {
+        if (InventoryFilterService.IsFilterActive && InventoryFilterService.FilteredProductIds.Count > 0)
+        {
+            // Filter inventory to show only products in the filter list
+            displayedInventory = inventory
+                .Where(item => InventoryFilterService.FilteredProductIds.Contains(item.ProductId))
+                .ToList();
+        }
+        else
+        {
+            // Show all inventory
+            displayedInventory = inventory;
+        }
+    }
+
+    private void ClearFilter()
+    {
+        InventoryFilterService.ClearFilter();
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from filter changes
+        InventoryFilterService.OnFilterChanged -= OnFilterChanged;
     }
 
     private string GetStockLevelClass(int count)
