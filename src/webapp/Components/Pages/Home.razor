@@ -558,51 +558,18 @@
                 Console.WriteLine("products.json not found in any expected location. Using fallback data.");
             }
 
-            // Fallback to hardcoded data if JSON loading fails
-            _cachedProducts = new List<Product>()
-    {
-        new Product { Id = 3, Name = "Navy Single-Breasted Slim Fit Formal Blazer", Description = "This navy single-breasted slim fit formal blazer is made from a blend of polyester and viscose. It features a notched lapel, a chest welt pocket, two flap pockets, a front button fastening, long sleeves, button cuffs, a double vent to the rear, and a full lining." },
-        new Product { Id = 111, Name = "White & Navy Blue Slim Fit Printed Casual Shirt", Description = "White and navy blue printed casual shirt, has a spread collar, short sleeves, button placket, curved hem, one patch pocket" },
-        new Product { Id = 116, Name = "Red Slim Fit Checked Casual Shirt", Description = "Red checked casual shirt, has a spread collar, long sleeves, button placket, curved hem, one patch pocket" },
-        new Product { Id = 10, Name = "Navy Blue Washed Denim Jacket", Description = "Navy Blue washed denim jacket, has a spread collar, 4 pockets, button closure, long sleeves, straight hem, and unlined" },
-        new Product { Id = 200, Name = "Organic Fresh Strawberries", Description = "Premium organic strawberries, hand-picked at peak ripeness. Sweet and juicy, perfect for snacking or desserts. 1 lb package." },
-        new Product { Id = 201, Name = "Whole Grain Artisan Bread", Description = "Freshly baked whole grain artisan bread with a crispy crust and soft interior. Made with organic flour, no preservatives. 500g loaf." },
-        new Product { Id = 202, Name = "Extra Virgin Olive Oil", Description = "Premium cold-pressed extra virgin olive oil from Mediterranean olives. Rich flavor perfect for cooking or salads. 750ml bottle." },
-        new Product { Id = 203, Name = "Organic Free-Range Eggs", Description = "Farm-fresh organic eggs from free-range chickens. Rich in omega-3 and protein. Grade A large eggs, 12 count." },
-        new Product { Id = 204, Name = "Grass-Fed Ground Beef", Description = "Premium grass-fed ground beef, 85% lean. No antibiotics or hormones. Perfect for burgers, tacos, or pasta. 1 lb package." },
-        new Product { Id = 205, Name = "Wild Alaskan Salmon Fillet", Description = "Fresh wild-caught Alaskan salmon fillet. Rich in omega-3 fatty acids. Individually vacuum-sealed, 8 oz portion." },
-        new Product { Id = 206, Name = "Organic Mixed Greens Salad", Description = "Fresh organic spring mix salad greens including spinach, arugula, and lettuce. Pre-washed and ready to eat. 5 oz container." },
-        new Product { Id = 207, Name = "Aged Cheddar Cheese", Description = "Sharp aged cheddar cheese, matured for 12 months. Rich and tangy flavor. Perfect for sandwiches or cheese boards. 8 oz block." },
-        new Product { Id = 208, Name = "Greek Style Yogurt", Description = "Creamy Greek-style yogurt, high in protein and probiotics. Plain flavor, made from whole milk. 32 oz container." },
-        new Product { Id = 209, Name = "Organic Honey", Description = "Raw organic honey from local beekeepers. Unfiltered and unpasteurized for maximum health benefits. 16 oz jar." },
-        new Product { Id = 300, Name = "Wireless Bluetooth Headphones", Description = "Premium over-ear wireless headphones with active noise cancellation. 30-hour battery life, premium sound quality, foldable design with carrying case." },
-        new Product { Id = 301, Name = "Smart Fitness Watch", Description = "Advanced fitness tracker with heart rate monitoring, GPS, sleep tracking, and 50+ sport modes. Water-resistant up to 50m. Compatible with iOS and Android." },
-        new Product { Id = 302, Name = "Portable Power Bank 20000mAh", Description = "High-capacity portable charger with fast charging technology. Dual USB ports, LED display, charges smartphones 4-5 times. Compact and lightweight." },
-        new Product { Id = 303, Name = "4K Webcam with Microphone", Description = "Professional 4K webcam with auto-focus, stereo microphone, and wide-angle lens. Perfect for streaming, video calls, and content creation." },
-        new Product { Id = 304, Name = "Wireless Gaming Mouse", Description = "Ergonomic wireless gaming mouse with RGB lighting, programmable buttons, and precision sensor. Up to 16000 DPI, 70-hour battery life." },
-        new Product { Id = 400, Name = "Stainless Steel Coffee Maker", Description = "Programmable 12-cup coffee maker with thermal carafe. Brew strength control, auto shut-off, and pause-and-serve function. Brushed stainless steel finish." },
-        new Product { Id = 401, Name = "Non-Stick Cookware Set 10-Piece", Description = "Complete cookware set with non-stick coating. Includes frying pans, saucepans, and stockpot with lids. Dishwasher safe, oven safe up to 350°F." },
-        new Product { Id = 402, Name = "Electric Kettle 1.7L", Description = "Fast-boiling electric kettle with auto shut-off and boil-dry protection. Stainless steel interior, LED indicator, cordless serving." },
-        new Product { Id = 403, Name = "Memory Foam Pillow Set", Description = "Premium memory foam pillows with cooling gel technology. Hypoallergenic bamboo cover, adjustable loft. Set of 2 queen-size pillows." },
-        new Product { Id = 404, Name = "Robot Vacuum Cleaner", Description = "Smart robot vacuum with app control and scheduling. Multiple cleaning modes, anti-drop sensors, automatic recharging. Perfect for hardwood and carpet." },
-        new Product { Id = 500, Name = "Best-Selling Mystery Novel", Description = "Gripping psychological thriller by renowned author. 400 pages of suspense and unexpected twists. Hardcover edition with dust jacket." },
-        new Product { Id = 501, Name = "Complete Cookbook Collection", Description = "Comprehensive cookbook with 500+ recipes from around the world. Full-color photos, step-by-step instructions, nutritional information included." },
-        new Product { Id = 502, Name = "Premium Leather Journal", Description = "Handcrafted leather-bound journal with acid-free paper. 200 lined pages, ribbon bookmark, elastic closure. Perfect for writing or sketching." },
-        new Product { Id = 503, Name = "Educational Science Kit", Description = "Complete science experiment kit for kids ages 8-12. Includes 50+ experiments covering chemistry, physics, and biology. Safety equipment included." },
-        new Product { Id = 600, Name = "Yoga Mat with Carrying Strap", Description = "Extra-thick 6mm yoga mat with non-slip surface. Eco-friendly TPE material, lightweight, easy to clean. Includes carrying strap and bag." },
-        new Product { Id = 601, Name = "Adjustable Dumbbell Set", Description = "Space-saving adjustable dumbbells 5-52.5 lbs per hand. Quick-change weight selection, compact design, includes storage tray." },
-        new Product { Id = 602, Name = "Camping Tent 4-Person", Description = "Waterproof 4-person camping tent with easy setup. Weather-resistant, mesh windows for ventilation, includes rainfly and carrying bag." },
-        new Product { Id = 603, Name = "Professional Jump Rope", Description = "Speed jump rope with ball bearings for smooth rotation. Adjustable length, comfortable foam handles, includes spare cable." },
-        new Product { Id = 604, Name = "Insulated Water Bottle 32oz", Description = "Double-wall vacuum insulated stainless steel bottle. Keeps drinks cold 24hrs/hot 12hrs. Leak-proof lid, wide mouth, fits cup holders." },
-        new Product { Id = 700, Name = "Natural Face Moisturizer", Description = "Organic face moisturizer with hyaluronic acid and vitamin E. Suitable for all skin types, non-greasy formula, paraben-free. 2 oz bottle." },
-        new Product { Id = 701, Name = "Electric Toothbrush Set", Description = "Rechargeable electric toothbrush with 5 cleaning modes. Includes 4 brush heads, travel case, and USB charging stand. 30-day battery life." },
-        new Product { Id = 702, Name = "Aromatherapy Essential Oil Set", Description = "Set of 6 pure essential oils for diffuser. Includes lavender, eucalyptus, peppermint, tea tree, lemon, and orange. 10ml bottles." },
-        new Product { Id = 703, Name = "Hair Styling Tool Set", Description = "Professional hair styling kit with ceramic flat iron and curling wand. Adjustable temperature, heat-resistant glove included." },
-        new Product { Id = 800, Name = "Strategy Board Game", Description = "Award-winning strategy board game for 2-4 players. Includes game board, cards, tokens, and dice. Average play time 60-90 minutes. Ages 10+." },
-        new Product { Id = 801, Name = "Building Blocks Set 1000 Pieces", Description = "Creative building blocks compatible with major brands. Includes storage box and instruction booklet with 20 model ideas. Ages 6+." },
-        new Product { Id = 802, Name = "Remote Control Racing Car", Description = "High-speed RC car with 2.4GHz controller. Reaches speeds up to 30 mph, rechargeable battery, durable design for indoor and outdoor use." },
-        new Product { Id = 803, Name = "Art Supplies Drawing Set", Description = "Complete 72-piece drawing set with colored pencils, sketching pencils, erasers, and sharpener. Portable carrying case included." }
+            // Fallback simplified (previous large English hardcoded list removed after localization merge).
+            // We avoid duplicating product data now that products.json (Japanese) is authoritative.
+            // Provide a minimal placeholder so UI logic that expects at least one entry does not break.
+            _cachedProducts = new List<Product>
+            {
+                new Product {
+                    Id = 0,
+                    Name = "サンプル商品 (products.json 未取得)",
+                    Description = "製品データファイル products.json が見つかりません。'wwwroot/data/products.json' を配置してください。"
+                }
             };
+            Console.WriteLine("products.json fallback: using minimal placeholder list instead of duplicated hardcoded English data.");
             return _cachedProducts;
         }
     }
