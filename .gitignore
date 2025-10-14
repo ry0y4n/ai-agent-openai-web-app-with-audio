@@ -236,7 +236,6 @@ ENV/
 *.pth
 *.safetensors
 model_data/
-models/
 weights/
 checkpoints/
 
