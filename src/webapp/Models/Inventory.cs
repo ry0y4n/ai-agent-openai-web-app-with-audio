@@ -1,11 +1,20 @@
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace dotnetfashionassistant.Models
 {    public class InventoryItem
     {
+        [JsonPropertyName("productId")]
         public int ProductId { get; set; }
+        
+        [JsonPropertyName("productName")]
         public required string ProductName { get; set; }
+        
+        [JsonPropertyName("sizeInventory")]
         public Dictionary<string, int> SizeInventory { get; set; }
+        
+        [JsonPropertyName("price")]
         public decimal Price { get; set; }
 
         public InventoryItem()
@@ -18,10 +27,42 @@ namespace dotnetfashionassistant.Models
     public static class InventoryService
     {
         private static readonly List<string> Sizes = new List<string> { "XS", "S", "M", "L", "XL", "XXL", "XXXL" };
+        private static List<InventoryItem>? _cachedInventory = null;
 
         public static List<InventoryItem> GetInventory()
         {
-            // Create dummy inventory data
+            // Return cached inventory if already loaded
+            if (_cachedInventory != null)
+            {
+                return _cachedInventory;
+            }
+
+            // Load inventory from JSON file
+            var jsonPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", "inventory.json");
+            
+            if (File.Exists(jsonPath))
+            {
+                try
+                {
+                    var jsonContent = File.ReadAllText(jsonPath);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    _cachedInventory = JsonSerializer.Deserialize<List<InventoryItem>>(jsonContent, options);
+                    
+                    if (_cachedInventory != null)
+                    {
+                        return _cachedInventory;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading inventory from JSON: {ex.Message}");
+                }
+            }
+
+            // Fallback to hardcoded data if JSON loading fails
             var inventory = new List<InventoryItem>();
               // Navy Formal Blazer
             var blazer = new InventoryItem
@@ -558,6 +599,7 @@ namespace dotnetfashionassistant.Models
             inventory.Add(rcCar);
             inventory.Add(artSet);
             
+            _cachedInventory = inventory;
             return inventory;
         }
         
