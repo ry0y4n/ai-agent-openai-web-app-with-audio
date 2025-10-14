@@ -37,29 +37,45 @@ namespace dotnetfashionassistant.Models
                 return _cachedInventory;
             }
 
-            // Load inventory from JSON file
-            var jsonPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", "inventory.json");
-            
-            if (File.Exists(jsonPath))
+            // Attempt to resolve inventory JSON from multiple possible locations (see reasoning in Home.razor change).
+            string? ResolveInventoryJson()
+            {
+                var fileName = "inventory.json";
+                var candidates = new List<string>
+                {
+                    Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", fileName),                                           // Published output scenario
+                    Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "wwwroot", "data", fileName)), // Development run (bin path -> project root)
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "data", fileName)                                    // Working directory root
+                };
+                foreach (var path in candidates.Distinct())
+                {
+                    if (File.Exists(path)) return path;
+                }
+                return null;
+            }
+
+            var resolvedInventoryPath = ResolveInventoryJson();
+            if (resolvedInventoryPath != null)
             {
                 try
                 {
-                    var jsonContent = File.ReadAllText(jsonPath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
+                    var jsonContent = File.ReadAllText(resolvedInventoryPath);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     _cachedInventory = JsonSerializer.Deserialize<List<InventoryItem>>(jsonContent, options);
-                    
                     if (_cachedInventory != null)
                     {
+                        Console.WriteLine($"Loaded inventory from JSON: {resolvedInventoryPath}");
                         return _cachedInventory;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error loading inventory from JSON: {ex.Message}");
+                    Console.WriteLine($"Error loading inventory from JSON at '{resolvedInventoryPath}': {ex.Message}");
                 }
+            }
+            else
+            {
+                Console.WriteLine("inventory.json not found in any expected location. Using fallback data.");
             }
 
             // Fallback to hardcoded data if JSON loading fails

@@ -513,29 +513,48 @@
                 return _cachedProducts;
             }
 
-            // Load products from JSON file
-            var jsonPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", "products.json");
-            
-            if (File.Exists(jsonPath))
+            // Attempt to resolve JSON file from multiple possible locations.
+            // Reason: Under 'dotnet run' the physical wwwroot content isn't copied to AppContext.BaseDirectory for development builds.
+            // The original code only probed '<base>/wwwroot/data/products.json' which often doesn't exist, triggering fallback English data.
+            string? ResolveProductsJson()
+            {
+                var fileName = "products.json";
+                var candidates = new List<string>
+                {
+                    Path.Combine(AppContext.BaseDirectory, "wwwroot", "data", fileName),                                           // Published output scenario
+                    Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "wwwroot", "data", fileName)), // Development (bin/Debug/... back to project root)
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "data", fileName)                                   // Working directory root
+                };
+
+                foreach (var path in candidates.Distinct())
+                {
+                    if (File.Exists(path)) return path;
+                }
+                return null;
+            }
+
+            var resolvedPath = ResolveProductsJson();
+            if (resolvedPath != null)
             {
                 try
                 {
-                    var jsonContent = File.ReadAllText(jsonPath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
+                    var jsonContent = File.ReadAllText(resolvedPath);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     _cachedProducts = JsonSerializer.Deserialize<List<Product>>(jsonContent, options);
-                    
                     if (_cachedProducts != null)
                     {
+                        Console.WriteLine($"Loaded products from JSON: {resolvedPath}");
                         return _cachedProducts;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error loading products from JSON: {ex.Message}");
+                    Console.WriteLine($"Error loading products from JSON at '{resolvedPath}': {ex.Message}");
                 }
+            }
+            else
+            {
+                Console.WriteLine("products.json not found in any expected location. Using fallback data.");
             }
 
             // Fallback to hardcoded data if JSON loading fails
