@@ -71,17 +71,18 @@ namespace dotnetfashionassistant.Services
                     _agentId?.Substring(0, Math.Min(8, _agentId.Length)) + "...");
             }
         }
-          // Lazy initialization of the client only when actually needed
+        
+        // Lazy initialization of the client only when actually needed
         private void EnsureInitialized()
         {
             if (_isInitialized || !_isConfigured)
                 return;
-                
+
             lock (_initLock)
             {
                 if (_isInitialized)
                     return;
-                      try
+                try
                 {
                     // Use ManagedIdentityCredential for Azure deployment
                     _client = new AgentsClient(_connectionString, new DefaultAzureCredential());
@@ -93,24 +94,28 @@ namespace dotnetfashionassistant.Services
                     _logger.LogError(ex, "Error initializing AzureAIAgentService client");
                 }
             }
-        }public async Task<string> CreateThreadAsync()
-        {            if (!_isConfigured)
+        }
+        
+        public async Task<string> CreateThreadAsync()
+        {
+            if (!_isConfigured)
             {
                 _logger.LogWarning("Attempted to create thread with unconfigured AI Agent service");
                 return "agent-not-configured";
             }
-            
+
             // Initialize client on demand
             EnsureInitialized();
-            
+
             if (_client == null)
             {
                 _logger.LogWarning("Failed to initialize AI Agent client");
                 return "agent-initialization-failed";
             }
-            
+
             try
-            {                Response<AgentThread> threadResponse = await _client.CreateThreadAsync();
+            {
+                Response<AgentThread> threadResponse = await _client.CreateThreadAsync();
                 AgentThread thread = threadResponse.Value;
                 return thread.Id;
             }
@@ -119,7 +124,9 @@ namespace dotnetfashionassistant.Services
                 _logger.LogError(ex, "Error creating AI Agent thread");
                 return "agent-not-configured";
             }
-        }        public async Task<AgentResponse> SendMessageAsync(string threadId, string userMessage)
+        }
+
+        public async Task<AgentResponse> SendMessageAsync(string threadId, string userMessage)
         {
             if (!_isConfigured || threadId == "agent-not-configured")
             {
@@ -211,18 +218,18 @@ namespace dotnetfashionassistant.Services
         private async Task<List<AgentToolCallInfo>> GetToolCallsFromRunAsync(string threadId, string runId)
         {
             var toolCallsList = new List<AgentToolCallInfo>();
-            
+
             if (_client == null || string.IsNullOrEmpty(_connectionString))
             {
                 _logger.LogWarning("Client is null in GetToolCallsFromRunAsync");
                 return toolCallsList;
             }
-            
+
             try
             {
                 // Get run steps using SDK
                 Response<PageableList<RunStep>> runStepsResponse = await _client.GetRunStepsAsync(threadId, runId);
-                
+
                 // Access raw JSON response to extract tool call information
                 // This is necessary because the SDK's UnknownRunStepToolCall type doesn't expose
                 // the function name and output for OpenAPI tool calls
@@ -230,11 +237,11 @@ namespace dotnetfashionassistant.Services
                 if (rawResponse != null && rawResponse.Content != null)
                 {
                     var rawContent = rawResponse.Content.ToString();
-                    
+
                     // Parse the raw JSON to extract tool calls
                     var jsonDoc = System.Text.Json.JsonDocument.Parse(rawContent);
                     var root = jsonDoc.RootElement;
-                    
+
                     if (root.TryGetProperty("data", out var dataArray))
                     {
                         foreach (var step in dataArray.EnumerateArray())
@@ -247,15 +254,15 @@ namespace dotnetfashionassistant.Services
                                     {
                                         var toolCallId = toolCall.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
                                         var toolType = toolCall.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
-                                        
+
                                         // Handle both "function" and "openapi" tool calls
-                                        if ((toolType == "function" || toolType == "openapi") && 
+                                        if ((toolType == "function" || toolType == "openapi") &&
                                             toolCall.TryGetProperty("function", out var functionObj))
                                         {
                                             var functionName = functionObj.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
                                             var arguments = functionObj.TryGetProperty("arguments", out var argsProp) ? argsProp.GetString() : null;
                                             var output = functionObj.TryGetProperty("output", out var outputProp) ? outputProp.GetString() : null;
-                                            
+
                                             if (!string.IsNullOrEmpty(functionName))
                                             {
                                                 toolCallsList.Add(new AgentToolCallInfo
@@ -280,7 +287,9 @@ namespace dotnetfashionassistant.Services
             }
 
             return toolCallsList;
-        }public async Task<List<ChatMessage>> GetThreadHistoryAsync(string threadId)
+        }
+
+        public async Task<List<ChatMessage>> GetThreadHistoryAsync(string threadId)
         {
             if (!_isConfigured || threadId == "agent-not-configured")
             {
