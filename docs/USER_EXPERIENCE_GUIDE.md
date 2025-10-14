@@ -8,9 +8,10 @@ This guide demonstrates the user experience improvements introduced by the AI ag
 
 ### Before This Feature
 
-**User asks**: "○○な商品って何がある？" (What products are like XX?)
+**User asks**: "○○ な商品って何がある？" (What products are like XX?)
 
 **What happened**:
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ Fashion Store Inventory              │ Chat Assistant        │
@@ -30,6 +31,7 @@ This guide demonstrates the user experience improvements introduced by the AI ag
 ```
 
 **Problems**:
+
 - User sees all products but only cares about the 3 mentioned
 - Must manually search through 50+ items
 - Cognitive load: "Which ones did the AI mention?"
@@ -37,9 +39,10 @@ This guide demonstrates the user experience improvements introduced by the AI ag
 
 ### After This Feature
 
-**User asks**: "○○な商品って何がある？" (What products are like XX?)
+**User asks**: "○○ な商品って何がある？" (What products are like XX?)
 
 **What happens**:
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ Fashion Store Inventory              │ Chat Assistant        │
@@ -59,6 +62,7 @@ This guide demonstrates the user experience improvements introduced by the AI ag
 ```
 
 **Benefits**:
+
 - Automatic filtering to relevant products
 - Clear visual indicator of active filter
 - Easy to return to full catalog with "Show All"
@@ -139,7 +143,7 @@ Conversation Flow:
 User: "Show me fashion items"
 → Filter: Shows 10 fashion products
 
-User: "Any electronics?"  
+User: "Any electronics?"
 → Filter: Updates to show 5 electronic products
 → Previous filter (fashion) is replaced
 
@@ -151,6 +155,7 @@ User: "Actually, show me everything"
 ## Visual Indicators
 
 ### Active Filter Banner
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ ℹ️ AI Filter Active: Showing 5 of 50 products based on    │
@@ -163,6 +168,7 @@ User: "Actually, show me everything"
 **Action Button**: "Show All" with close icon
 
 ### No Results State
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ ℹ️ No products match the AI assistant's recommendations.   │
@@ -173,10 +179,11 @@ User: "Actually, show me everything"
 ```
 
 ### Normal State (No Filter)
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ Fashion Store                                              │
-│ Browse our latest collection of premium fashion items     │
+│ Browse our latest collection of premium items     │
 └────────────────────────────────────────────────────────────┘
 
 [All products displayed in grid]
@@ -185,21 +192,25 @@ User: "Actually, show me everything"
 ## User Actions
 
 ### 1. Chat with AI
+
 - Type question in chat box
 - AI responds with product recommendations
 - Filter applies automatically
 - Products update in real-time
 
 ### 2. Clear Filter
+
 **Option A**: Click "Show All" button in banner
 **Option B**: Start new conversation (click "New" in chat)
 
 ### 3. View Filtered Products
+
 - Scroll through filtered list
 - Add items to cart normally
 - All product actions work the same
 
 ### 4. Context Switching
+
 - Filter persists as you chat
 - Updates with each new query
 - Clears when you start fresh
@@ -207,12 +218,14 @@ User: "Actually, show me everything"
 ## Best Practices for Users
 
 ### ✅ DO:
+
 - Ask specific questions: "Show me shirts" or "What blazers do you have?"
 - Use the filter to focus on relevant items
 - Click "Show All" when you want to browse everything
 - Start new conversations for different shopping contexts
 
 ### ❌ DON'T:
+
 - Don't expect filtering for cart questions ("What's in my cart?")
 - Don't assume filter persists after page refresh
 - Don't expect products mentioned by name (without API call) to filter
@@ -228,6 +241,7 @@ User: "Actually, show me everything"
 ## Mobile Experience
 
 On mobile devices:
+
 - Chat assistant is accessible via side panel or bottom sheet
 - Filter banner adapts to smaller screens
 - "Show All" button remains easily tappable
@@ -236,26 +250,31 @@ On mobile devices:
 ## Tips and Tricks
 
 ### Tip 1: Narrow Your Search
+
 Instead of: "Show me products"
 Try: "Show me winter jackets under $100"
 
 ### Tip 2: Explore by ID
+
 If you know a product ID: "Show me product 116"
 Instantly filters to that single item
 
 ### Tip 3: Compare Options
+
 Ask: "Show me blazers"
 Review the filtered options
 Then: "Show me jackets instead"
 Easily compare different categories
 
 ### Tip 4: Full Context
+
 When you want the full catalog back:
 Just click [Show All] - instant access to everything
 
 ## Feedback and Iteration
 
 This feature learns from your interactions:
+
 - Filters become more precise over time
 - The more specific your questions, the better the filtering
 - Cart operations are intelligently excluded
@@ -264,6 +283,7 @@ This feature learns from your interactions:
 ## Summary
 
 The AI agent inventory filtering feature transforms the shopping experience from:
+
 - **Manual searching** → **Automatic filtering**
 - **Information overload** → **Focused results**
 - **Context switching** → **Synchronized display**
