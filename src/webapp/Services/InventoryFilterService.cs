@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using dotnetfashionassistant.Models;
 
 namespace dotnetfashionassistant.Services
 {
@@ -90,6 +93,60 @@ namespace dotnetfashionassistant.Services
         }
 
         /// <summary>
+        /// Updates the filter by matching inventory items whose names appear in the AI assistant's response.
+        /// </summary>
+        /// <param name="answerText">The final answer text produced by the AI assistant.</param>
+        /// <param name="inventoryItems">Inventory items available for matching.</param>
+        public void UpdateFilterFromAnswerText(string? answerText, IEnumerable<InventoryItem> inventoryItems)
+        {
+            if (string.IsNullOrWhiteSpace(answerText))
+            {
+                return;
+            }
+
+            if (inventoryItems == null)
+            {
+                return;
+            }
+
+            var normalizedAnswer = NormalizeText(answerText);
+            if (string.IsNullOrEmpty(normalizedAnswer))
+            {
+                return;
+            }
+
+            var matchedIds = new HashSet<int>();
+
+            foreach (var item in inventoryItems)
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.ProductName))
+                {
+                    continue;
+                }
+
+                var normalizedName = NormalizeText(item.ProductName);
+                if (string.IsNullOrEmpty(normalizedName))
+                {
+                    continue;
+                }
+
+                if (normalizedAnswer.Contains(normalizedName, StringComparison.Ordinal))
+                {
+                    matchedIds.Add(item.ProductId);
+                }
+            }
+
+            if (matchedIds.Count == 0)
+            {
+                return;
+            }
+
+            _filteredProductIds = matchedIds;
+            _isFilterActive = true;
+            NotifyFilterChanged();
+        }
+
+        /// <summary>
         /// Clears the current filter and shows all products
         /// </summary>
         public void ClearFilter()
@@ -150,6 +207,29 @@ namespace dotnetfashionassistant.Services
         private void NotifyFilterChanged()
         {
             OnFilterChanged?.Invoke();
+        }
+
+        private static string NormalizeText(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string normalized;
+            try
+            {
+                normalized = value.Normalize(NormalizationForm.FormKC);
+            }
+            catch
+            {
+                normalized = value;
+            }
+
+            normalized = normalized.ToLowerInvariant();
+            normalized = Regex.Replace(normalized, "[\\p{P}\\p{S}]", " ");
+            normalized = Regex.Replace(normalized, "\\s+", " ");
+            return normalized.Trim();
         }
     }
 }

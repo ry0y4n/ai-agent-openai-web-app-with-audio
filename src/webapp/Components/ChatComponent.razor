@@ -765,6 +765,9 @@
                 var functionOutputs = agentResponse.ToolCalls.Select(tc => tc.Output ?? "").ToList();
                 InventoryFilterService.UpdateFilterFromToolCalls(functionNames, functionOutputs);
             }
+
+            // Apply additional filtering based on product names mentioned in the AI response
+            InventoryFilterService.UpdateFilterFromAnswerText(aiResponse, InventoryService.GetInventory());
             
             // Check if the response mentions adding items to cart
             if (aiResponse.Contains("added to your cart") || 
